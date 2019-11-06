@@ -15,7 +15,7 @@ import pandas as pd
 
 parser = argparse.ArgumentParser(description="Filter GFF3 by gene of interest")
 
-parser.add_argument('-p','--path', help='path to configuration file...', required = True)
+parser.add_argument('-p','--path', help='path to GFF3 file...', required = True)
 parser.add_argument('-f','--file', help='name of GFF3 file...[TSV]', required = True)
 parser.add_argument('-q','--query', help='gene of interest...', required = True)
 
