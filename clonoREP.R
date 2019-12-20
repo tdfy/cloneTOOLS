@@ -46,14 +46,6 @@ use <- vis.gene.usage(twb[[1]], HUMAN_TRGV, .main = 'Sample I V-usage')
 stat <- cloneset.stats(emo)
 write.table(stat, file=paste(path,name,"_stat.txt",sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
 
-
-penta_hope = paste(link,link_no, "_penta.png", sep="")
-ggsave(penta_hope, width = 2, height = 5)
-
-
-
-
-
 for (file in file_list){
 
 
