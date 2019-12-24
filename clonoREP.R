@@ -17,12 +17,8 @@ file_list <- list.files(path)
 
 for (file in file_list){
 
-  print(file)
-
-  voodoo <- read.table(paste(path,file,sep=""), header=TRUE, sep="\t")  ##### Necessary to convert clone ID count to true integer***
-  
-  
-  
+   voodoo <- read.table(paste(path,file,sep=""), header=TRUE, sep="\t")  ##### Necessary to convert clone ID count to true integer***
+ 
   write.table(voodoo, file=paste(path,file,sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
 
 }
@@ -75,9 +71,7 @@ write.table(top3, file=paste(path,name,"S3_gamma.txt",sep=""), sep="\t",row.name
 
 ###------- Circos ----------------###
 
-
 for (file in file_list){
-
 
   try <- file
   depth <- read.table(paste(path,try,sep=""),header=T,sep="\t")
