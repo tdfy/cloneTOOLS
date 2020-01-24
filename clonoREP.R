@@ -5,29 +5,30 @@ library(circlize)
 library(stringr)
 library(dplyr)
 library(VennDiagram)
+library(rlist)
 
 
-path <- "c:/Export/TCRGD_2019Dec17/lib_1x2x3"
+path <- "c:/Export/TCRGD_2019Dec17/lib_289/convert"
 
 setwd(path)
 
-file_list <- c('1_S1.clonotypes.TRG.txt','2_S2.clonotypes.TRG.txt','3_S3.clonotypes.TRG.txt')
+# file_list <- c('1_S1.clonotypes.TRG.txt','2_S2.clonotypes.TRG.txt','3_S3.clonotypes.TRG.txt')
 
 file_list <- list.files(path)
 
 for (file in file_list){
 
-   voodoo <- read.table(paste(path,file,sep=""), header=TRUE, sep="\t")  ##### Necessary to convert clone ID count to true integer***
- 
-  write.table(voodoo, file=paste(path,file,sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
+  voodoo <- read.table(paste(path,"/",file,sep=""), header=TRUE, sep="\t")  ##### Necessary to convert clone ID count to true integer***
+  
+  write.table(voodoo, file=paste(path,"/",file,sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
 
 }
 
-emo <- parse.file.list(file_list, 'mixcr')
+# emo <- parse.file.list(file_list, 'mixcr')
 
 emo <- parse.folder(path, 'mixcr')
 
-name = "1x2x3"
+name = "2x8x9"
 
 prop <- vis.top.proportions(emo) 
 penta_hope = paste(path,name, "_topCLONE.png", sep="")
@@ -53,7 +54,7 @@ grid.newpage();
 
 
 stat <- cloneset.stats(emo)
-write.table(stat, file=paste(path,name,"_stat.txt",sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
+write.table(stat, file=paste(path,"/",name,"_stat.txt",sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
 
 short_stat <- stat[,c("#Nucleotide clones","#Aminoacid clonotypes","#In-frames","#Out-of-frames","Mean.reads","Sum.reads")]
 write.table(short_stat, file=paste(path,name,"_short_stat.txt",sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
@@ -61,20 +62,22 @@ write.table(short_stat, file=paste(path,name,"_short_stat.txt",sep=""), sep="\t"
 ##---------Top Clone Stats ------###
 
 top1 <- emo[[1]][1:10,4:8]
-write.table(top1, file=paste(path,name,"S1_gamma.txt",sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
+write.table(top1, file=paste(path,name,"S2_gamma.txt",sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
 
 top2 <- emo[[2]][1:10,4:8]
-write.table(top2, file=paste(path,name,"S2_gamma.txt",sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
+write.table(top2, file=paste(path,name,"S8_gamma.txt",sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
 
 top3 <- emo[[3]][1:10,4:8]
-write.table(top3, file=paste(path,name,"S3_gamma.txt",sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
+write.table(top3, file=paste(path,name,"S9_gamma.txt",sep=""), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
 
 ###------- Circos ----------------###
 
+
 for (file in file_list){
 
+
   try <- file
-  depth <- read.table(paste(path,try,sep=""),header=T,sep="\t")
+  depth <- read.table(paste(path,"/",try,sep=""),header=T,sep="\t")
   
   depth$vgene <- str_split_fixed(depth$allVHitsWithScore,"[*]",4)[,1]
   depth$jgene <- str_split_fixed(depth$allJHitsWithScore,"[*]",4)[,1]
@@ -91,7 +94,7 @@ for (file in file_list){
                            sector.name = get.cell.meta.data("sector.index")
                            xlim = get.cell.meta.data("xlim")
                            ylim = get.cell.meta.data("ylim")
-                           circos.text(mean(xlim), ylim[1], cex = 0.65, sector.name, facing = "clockwise", adj = c(-0.5, 1))
+                           circos.text(mean(xlim), ylim[1], cex = 0.4, sector.name, facing = "clockwise", adj = c(-0.5, 1))
                          }
   )
   
@@ -110,19 +113,31 @@ for (file in file_list){
 
 
 ###----------------- Venn ---------------------###
+df1x <- as.data.frame(emo[1])
 df1 <- as.data.frame(emo[1])
+df1$Clone_ID <- rownames(df1)
+colnames(df1)[6] <- "AA_Seq"
+
 df2 <- as.data.frame(emo[2])
+df2$Clone_ID <- rownames(df2)
+colnames(df2)[6] <- "AA_Seq"
+
 df3 <- as.data.frame(emo[3])
+df3$Clone_ID <- rownames(df3)
+colnames(df3)[6] <- "AA_Seq"
 
-try3 <- sapply(df1$X1_S1.CDR3.amino.acid.sequence,as.factor)
 
-try4 <- sapply(df2$X2_S2.CDR3.amino.acid.sequence,as.factor)
+try3 <- sapply(df1$AA_Seq,as.factor)
 
-try5 <- sapply(df3$X3_S3.CDR3.amino.acid.sequence,as.factor)
+try4 <- sapply(df2$AA_Seq,as.factor)
+
+try5 <- sapply(df3$AA_Seq,as.factor)
 
 ONE <- levels(try3)
 TWO <- levels(try4)
 THREE <- levels(try5)
+
+namelist <- c("S2", "S8", "S9")
 
 mix <-venn.plot <- draw.triple.venn(
   area1 = length(ONE),
@@ -132,21 +147,86 @@ mix <-venn.plot <- draw.triple.venn(
   n23 = length(intersect(TWO,THREE)),
   n13 = length(intersect(ONE,THREE)),
   n123 = length(Reduce(intersect, list(ONE,TWO,THREE))),
-  category = c("S1", "S2", "S3"),
+  category = namelist,
   fill = c("blue", "red", "green")) #,
 
 gg <- grid.arrange(gTree(children=mix), top="TCR Gamma AA Clonotypes")
 
-inter <- Reduce(intersect, list(ONE,THREE))
+inter1 <- Reduce(intersect, list(ONE,TWO))
+inter2 <- Reduce(intersect, list(ONE,THREE))
+inter3 <- Reduce(intersect, list(TWO,THREE))
+interALL <- Reduce(intersect,list(ONE,TWO,THREE))
 
-threeish <- subset(df1, df1$X1_S1.CDR3.amino.acid.sequence %in% inter)
-sum(threeish$X1_S1.Read.proportion)
 
-fourish <- subset(df2, df2$X3_S2.CDR2.amino.acid.sequence %in% inter)
-sum(fourish$X2_S2.Read.proportion)
+top_share <- function (x,y) {
+  # int_df_list<<- list()
+  cols <- c(4:8,17)
+  lib_name <- deparse(substitute(x))
+  LN <<- paste("lib",lib_name,sep="_")
 
-fiveish <- subset(df3, df3$X3_S3.CDR3.amino.acid.sequence %in% inter)
-sum(fiveish$X3_S3.Read.proportion)
+  nn1 <-str_replace_all(LN,"[\\[]","")
+  LN <- str_replace_all(nn1,"[\\]]","")
+  
+  intersection <- deparse(substitute(y))
+  interx1 <<- paste(intersection)
+  n1 <- str_replace_all(interx1,"[\\[]","")
+  interx <-str_replace_all(n1,"[\\]]","")
+  
 
-new3 <- select(threeish,X1_S1.Read.proportion,X1_S1.CDR3.amino.acid.sequence)
-new3a <- aggregate(X1_S1.Read.proportion ~ X1_S1.CDR3.amino.acid.sequence, data=new3, FUN=sum)
+  sub_df <<- subset(x, x$AA_Seq %in% y)
+  lib_flat <- apply(sub_df,2,as.character)
+  
+  int_name <<-paste(LN,interx,"all_share.txt",sep=".")
+  # hope <<-list.append(int_df_list,int_name)
+  
+  write.table(lib_flat, file=paste(LN,interx,"all_share.txt",sep="."), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
+  
+  
+  print(paste(LN,interx,"sum",sep="."))
+  
+  newlib <<- aggregate(sub_df[,c(4)] ~ sub_df[,c(6)], data=sub_df, FUN=sum)
+  assign(paste(LN,interx,"sum",sep="."), round(sum(newlib[2]), digits=3),envir = .GlobalEnv)
+
+  # lib_flat <- apply(sub_df,2,as.character)
+  lib_flatter <- lib_flat[1:10,cols]
+
+  write.table(lib_flatter, file=paste(LN,interx,"top_share.txt",sep="."), sep="\t",row.names=FALSE,quote = FALSE,col.names=TRUE)
+  
+  png(paste(LN,interx,"top_share.png",sep="."), height=1000, width=2000)
+  p<-tableGrob(lib_flatter)
+  grid.arrange(p)
+  dev.off()
+}
+
+df_list <- list(df1,df2,df1,df3,df2,df3)
+intersX <- list(inter1,inter1,inter2,inter2,inter3,inter3)
+
+mapply(top_share,df_list,intersX)
+
+
+
+
+neo = matrix(c(100,lib_dots1L1L.dots2L1L.sum,lib_dots1L3L.dots2L3L.sum,lib_dots1L2L.dots2L2L.sum,100,lib_dots1L5L.dots2L5L.sum,lib_dots1L4L.dots2L4L.sum,lib_dots1L6L.dots2L6L.sum,100),nrow=3,ncol=3)
+colnames(neo) <-paste(namelist,sep=",")
+rownames(neo) <-paste(namelist,sep=",")
+
+trip <- apply(neo,2,as.character)
+write.table(trip, file='prop_matrix.txt', sep="\t",row.names=TRUE,quote = FALSE,col.names=TRUE)
+
+
+##_____all intersections_______##
+
+lib1 <- subset(df1, df1$X2_S2.CDR3.amino.acid.sequence %in% interALL)
+newlib1 <- aggregate(lib1[,c(4)] ~ lib1[,c(6)], data=lib1, FUN=sum)
+sum1all <- round(sum(newlib1[2]), digits=3)
+
+lib2 <- subset(df2, df2$X8_S8.CDR3.amino.acid.sequence %in% interALL)
+newlib2 <- aggregate(lib2[,c(4)] ~ lib2[,c(6)], data=lib2, FUN=sum)
+sum2all <- round(sum(newlib2[2]), digits=3)
+
+
+lib3 <- subset(df3, df3$X9_S9.CDR3.amino.acid.sequence %in% interALL)
+newlib3 <- aggregate(lib3[,c(4)] ~ lib3[,c(6)], data=lib3, FUN=sum)
+sum3all <- round(sum(newlib3[2]), digits=3)
+
+
