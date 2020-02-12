@@ -6,6 +6,8 @@ library(stringr)
 library(dplyr)
 library(VennDiagram)
 library(rlist)
+library(vwr)
+lirbary(purrr)
 
 
 path <- "c:/Export/TCRGD_2019Dec17/lib_289/convert"
@@ -228,5 +230,31 @@ sum2all <- round(sum(newlib2[2]), digits=3)
 lib3 <- subset(df3, df3$X9_S9.CDR3.amino.acid.sequence %in% interALL)
 newlib3 <- aggregate(lib3[,c(4)] ~ lib3[,c(6)], data=lib3, FUN=sum)
 sum3all <- round(sum(newlib3[2]), digits=3)
+
+##_______clone finder_____________##
+
+df = NULL
+
+leven_find <- function(x,y){
+  # df = NULL
+  
+  xc <- cross2(x,twb[[y]]$CDR3.amino.acid.sequence)
+
+  for (i in 1:length(xc)){
+    score <- levenshtein.distance(xc[[i]][[1]],xc[[i]][[2]])
+    if (score <5){
+    Lev_Score <- c(score[[1]])
+    MR1_AA <- c(xc[[i]][[1]])
+    Clonotype <- c(xc[[i]][[2]])
+    MR1_len <- nchar(xc[[i]][[1]])
+    Clone_len <- nchar(xc[[i]][[2]])
+    Adj_Lev <-score - abs(nchar(xc[[i]][[1]])-nchar(xc[[i]][[2]]))
+    x <- data.frame(MR1_AA,Lev_Score,Clonotype,MR1_len,Clone_len, Adj_Lev)
+    df<<-rbind(df,x)}else{}
+  }
+  return(df)
+}
+
+write.table(df, file=paste(path,"/","S6_delta_V35_MR1.csv",sep=""), sep=",",row.names=FALSE,quote = FALSE,col.names=TRUE)
 
 
