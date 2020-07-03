@@ -1,6 +1,7 @@
 library(immunarch)
 library(circlize)
 library(stringr)
+library(vegan)
 
 
 file_path = "c:/Export/30-359090205/chain_loc/gamma/UPCC21413"
@@ -170,3 +171,56 @@ p <- p + scale_x_discrete(limits = timepoint)
 p <- p + scale_colour_manual(values = c("blue", "red"))+ theme_bw()
 
 p <- p + theme(legend.position = c(0.3, 0.9)) + ggtitle("CATWDRPYYKKLF-TRGV3/TRGJ1 Abundance \nby CAR qPCR ")
+
+
+#---------immunoSEQ Export Descriptive Metrics-------------#
+
+datalist= list()
+
+
+immunSEQsum <- function(file_path){
+  
+  df_list <- list.files(file_path)
+  
+  for (df in df_list){
+  
+  samp <- read.table(paste(file_path,"/",df,sep=""), header=TRUE, sep="\t")  ##### Necessary to convert clone ID count to true integer***
+  
+  template_num <- sum(samp$count..templates.reads.)
+  
+  query <- subset(samp, sequenceStatus=='In')
+  
+  query$prodFreq <- query$count..templates.reads./sum(query$count..templates.reads.)
+  
+  mxProd <- max(query$prodFreq) * 100 ## <- max prod  freq
+  
+  entro <- entropy(query$count..templates.reads.)
+  
+  dominance <- diversity(query$prodFreq, index = "simpson", MARGIN = 1, base = exp(1)) ### <-- simpson's 
+  
+  simP_clone <- round(sqrt(1-dominance),4) ## <- Simpson Clonality
+  
+  prodRE <- sum(query$count..templates.reads.)
+  
+  Entropy <- round(entro,3)
+  Clonality <- round(simP_clone,3)
+  Max_Frequency <- round(mxProd,3)
+  Gene_Rearrangements <- template_num
+  
+  
+  
+  overview <<- data.frame(Entropy,Clonality,Max_Frequency,Gene_Rearrangements,prodRE)
+  
+  datalist[[df]] <- overview # add it to your list
+  
+  }
+  
+  big_data <<- do.call(rbind, datalist)
+  
+  write.table(big_data, file=paste(file_path,"/","immunoSeqSum.tsv",sep=""), sep="\t",row.names=TRUE,quote = FALSE,col.names=TRUE)
+  
+  return(big_data) # mxProd, entro, dominance, simP_clone)
+  
+  
+}
+
