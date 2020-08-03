@@ -224,3 +224,89 @@ immunSEQsum <- function(file_path){
   
 }
 
+
+###---------------IGH Reptoire Analysis to determine Onco-clonotypes and MRD---------------------------##
+
+df_list <- c("baseline.tsv","timepoint.tsv")
+
+
+datalist= list()
+
+
+Bcell_immunSEQsum <- function(df_list){
+  for (df in df_list){
+    
+    base <- read.table(paste(file_path,"/",df_list[1],sep=""), header=TRUE, sep="\t")  ##### Necessary to convert clone ID count to true integer***
+    
+    base_sort <- base[order(-base$productive_frequency),]
+    
+    top_clone <- as.character(base_sort$amino_acid[1])
+    
+    genome_int <- as.numeric(base_sort$templates[1])
+    
+    
+    samp <- read.table(paste(file_path,"/",df,sep=""), header=TRUE, sep="\t")  ##### Necessary to convert clone ID count to true integer***
+    
+    #-----Top CLone Metrics----#
+    
+    clone_set <- subset(samp, amino_acid %in% top_clone) 
+
+    if (nrow(clone_set)==0)
+    {
+      genome<-"ND"
+      mass_frac<-"N/A"}else{
+    
+    clone_sort <- clone_set[order(-clone_set$productive_frequency),]
+    
+    genome <- as.numeric(clone_sort$templates[1])
+    
+    mass_frac <- as.numeric(clone_sort$templates[1]/clone_sort$sample_cells_mass_estimate[1])
+    
+    if (genome==genome_int)
+    {log_red <- "N/A"}else{log_red <- as.character(round(log10(genome_int/genome)),3)}
+      }
+
+    #-----Metrics------#
+    
+    template_num <- sum(samp$templates)
+    
+    query <- subset(samp, frame_type=='In')
+    
+    query$prodFreq <- query$seq_reads/sum(query$seq_reads)
+    
+    mxProd <- max(query$prodFreq) * 100 ## <- max prod  freq
+    
+    entro <- entropy(query$seq_reads)
+    
+    dominance <- diversity(query$prodFreq, index = "simpson", MARGIN = 1, base = exp(1)) ### <-- simpson's 
+    
+    simP_clone <- round(sqrt(1-dominance),4) ## <- Simpson Clonality
+    
+    Productive_Rearrangements <- sum(query$templates)
+    
+    Entropy <- round(entro,3)
+    Clonality <- round(simP_clone,3)
+    Max_Frequency <- round(mxProd,3)
+    Gene_Rearrangements <- template_num
+    
+    #Clone#
+    CLL_Clonotype <- top_clone
+    Fraction_of_Nucleated <- mass_frac
+    Estimated_No_genomes <- genome
+    Log_Reduction <- log_red
+    
+    overview <<- data.frame(Entropy,Clonality,Max_Frequency,Gene_Rearrangements,Productive_Rearrangements,CLL_Clonotype,Fraction_of_Nucleated,Estimated_No_genomes,Log_Reduction)
+    
+    datalist[[df]] <- overview # add it to your list
+    
+   
+  }
+  
+  big_data <<- do.call(rbind, datalist)
+
+  write.table(big_data, file=paste(file_path,"/","immunoSeqSum_study.tsv",sep=""), sep="\t",row.names=TRUE,quote = FALSE,col.names=TRUE)
+
+  return(big_data) # mxProd, entro, dominance, simP_clone)
+  
+  
+}
