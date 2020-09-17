@@ -244,11 +244,22 @@ Bcell_immunSEQsum <- function(df_list){
     
     genome_int <- as.numeric(base_sort$templates[1])
     
+    leuk_clone <- nrow(subset(base_sort, frequency > 0.10))
+    
+    leuk_prod_clone <- nrow(subset(base_sort, frequency > 0.10 & frame_type=='In'))
+    
+    base_dj <-as.character(subset(base[order(-base$templates),], rearrangement_type =='DJ')$rearrangement[1])
+    print(base_dj)
+
     ##--------------------------##
     unsort_samp <- read.table(paste(file_path,"/",df,sep=""), header=TRUE, sep="\t")  ##### Necessary to convert clone ID count to true integer***
     print(df)    
 
+    Sample_Type <- as.character(unsort_samp$sample_catalog_tags[1])
+    
     #-----Top CLone Metrics----#
+    
+    
     
     clone_set <- subset(unsort_samp, amino_acid %in% top_clone) 
 
@@ -267,9 +278,20 @@ Bcell_immunSEQsum <- function(df_list){
     {log_red <- "N/A"}else{log_red <- as.character(round(log10(genome_int/genome)),3)}
       }
     
+    print(genome)
+    print(genome_int)
+    
     #-----Metrics------#
     
     samp_sort <- unsort_samp[order(-unsort_samp$templates),]
+    
+    total_temps <-sum(unsort_samp$template)
+    
+    DJ_clone <- subset(samp_sort, rearrangement_type =='DJ')$templates[1]
+    DJ_clonotype <- if (base_dj == as.character(subset(samp_sort, rearrangement_type =='DJ')$rearrangement[1])){"Yes"}else{"No"}
+    # DJ_clonotype <- as.character(subset(samp_sort, rearrangement_type =='DJ')$rearrangement[1])
+    # print(DJ_clonotype)
+    
     
     samp <- subset(samp_sort, rearrangement_type!='DJ')
     
@@ -302,7 +324,8 @@ Bcell_immunSEQsum <- function(df_list){
     Estimated_No_genomes <- genome
     Log_Reduction <- log_red
     
-    overview <<- data.frame(Entropy,Clonality,Max_Frequency,Gene_Clones,Productive_Clones, Clonotypes,CLL_Clonotype,Fraction_of_Nucleated,Estimated_No_genomes,Log_Reduction)
+    overview <<- data.frame(Sample_Type,Entropy,Clonality,Max_Frequency,total_temps,Gene_Clones,Productive_Clones, 
+                            Clonotypes,leuk_clone,leuk_prod_clone,DJ_clone,DJ_clonotype,CLL_Clonotype,Fraction_of_Nucleated,Estimated_No_genomes,Log_Reduction)
     
     datalist[[df]] <- overview # add it to your list
     
@@ -312,7 +335,7 @@ Bcell_immunSEQsum <- function(df_list){
   
   big_data <<- do.call(rbind, datalist)
 
-  write.table(big_data, file=paste(file_path,"/","immunoSeqSum_.tsv",sep=""), sep="\t",row.names=TRUE,quote = FALSE,col.names=TRUE)
+  write.table(big_data, file=paste(file_path,"/","immunoSeqSum_18415-0.tsv",sep=""), sep="\t",row.names=TRUE,quote = FALSE,col.names=TRUE)
 
   return(big_data) # mxProd, entro, dominance, simP_clone)
   
