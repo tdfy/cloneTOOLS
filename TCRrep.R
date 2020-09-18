@@ -232,8 +232,10 @@ df_list <- c("base","tp")
 
 datalist= list()
 
+datalist= list()
 
-Bcell_immunSEQsum <- function(df_list){
+
+Bcell_immunSEQsum <- function(file_path,df_list){
   for (df in df_list){
     
     base <- read.table(paste(file_path,"/",df_list[1],sep=""), header=TRUE, sep="\t")  ##### Necessary to convert clone ID count to true integer***
@@ -249,24 +251,25 @@ Bcell_immunSEQsum <- function(df_list){
     leuk_prod_clone <- nrow(subset(base_sort, frequency > 0.10 & frame_type=='In'))
     
     base_dj <-as.character(subset(base[order(-base$templates),], rearrangement_type =='DJ')$rearrangement[1])
-    print(base_dj)
 
     ##--------------------------##
     unsort_samp <- read.table(paste(file_path,"/",df,sep=""), header=TRUE, sep="\t")  ##### Necessary to convert clone ID count to true integer***
-    print(df)    
+    print(df)
+    print(as.character(unsort_samp$counting_method[1]))
 
     Sample_Type <- as.character(unsort_samp$sample_catalog_tags[1])
     
     #-----Top CLone Metrics----#
     
-    
-    
+
     clone_set <- subset(unsort_samp, amino_acid %in% top_clone) 
+    
 
     if (nrow(clone_set)==0)
     {
       genome<-"ND"
-      mass_frac<-"N/A"}else{
+      mass_frac<-"N/A"
+      log_red <- "N/A"}else{
     
     clone_sort <- clone_set[order(-clone_set$productive_frequency),]
     
@@ -274,25 +277,20 @@ Bcell_immunSEQsum <- function(df_list){
     
     mass_frac <- as.numeric(clone_sort$templates[1]/clone_sort$sample_cells_mass_estimate[1])
     
-    if (genome==genome_int)
-    {log_red <- "N/A"}else{log_red <- as.character(round(log10(genome_int/genome)),3)}
+    if (as.character(genome)==as.character(genome_int))
+    {log_red <- "N/A"}else{log_red <- as.character(round(log10(genome_int/genome),2))}
+
       }
-    
-    print(genome)
-    print(genome_int)
     
     #-----Metrics------#
     
     samp_sort <- unsort_samp[order(-unsort_samp$templates),]
     
-    total_temps <-sum(unsort_samp$template)
+    Total_Clones <-sum(unsort_samp$template)
     
     DJ_clone <- subset(samp_sort, rearrangement_type =='DJ')$templates[1]
     DJ_clonotype <- if (base_dj == as.character(subset(samp_sort, rearrangement_type =='DJ')$rearrangement[1])){"Yes"}else{"No"}
-    # DJ_clonotype <- as.character(subset(samp_sort, rearrangement_type =='DJ')$rearrangement[1])
-    # print(DJ_clonotype)
-    
-    
+
     samp <- subset(samp_sort, rearrangement_type!='DJ')
     
     template_num <- sum(samp$templates)
@@ -324,7 +322,7 @@ Bcell_immunSEQsum <- function(df_list){
     Estimated_No_genomes <- genome
     Log_Reduction <- log_red
     
-    overview <<- data.frame(Sample_Type,Entropy,Clonality,Max_Frequency,total_temps,Gene_Clones,Productive_Clones, 
+    overview <<- data.frame(Sample_Type,Entropy,Clonality,Max_Frequency,Total_Clones,Gene_Clones,Productive_Clones, 
                             Clonotypes,leuk_clone,leuk_prod_clone,DJ_clone,DJ_clonotype,CLL_Clonotype,Fraction_of_Nucleated,Estimated_No_genomes,Log_Reduction)
     
     datalist[[df]] <- overview # add it to your list
@@ -341,3 +339,5 @@ Bcell_immunSEQsum <- function(df_list){
   
   
 }
+
+
